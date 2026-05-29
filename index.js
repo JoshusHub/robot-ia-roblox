@@ -3,13 +3,15 @@ const express = require("express");
 const app = express();
 app.use(express.json());
 
-// Tu API KEY segura desde Render
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
 app.post("/chat", async (req, res) => {
-    const message = req.body.message;
-
     try {
+        const message = req.body.message;
+
+        console.log("Mensaje recibido:", message);
+        console.log("API KEY EXISTE:", !!OPENAI_API_KEY);
+
         const response = await fetch(
             "https://api.openai.com/v1/chat/completions",
             {
@@ -19,11 +21,11 @@ app.post("/chat", async (req, res) => {
                     "Authorization": `Bearer ${OPENAI_API_KEY}`
                 },
                 body: JSON.stringify({
-                    model: "gpt-4.1-mini",
+                    model: "gpt-4o-mini",
                     messages: [
                         {
                             role: "system",
-                            content: "Eres un robot NPC amigable dentro de Roblox."
+                            content: "Eres un robot NPC amigable de Roblox."
                         },
                         {
                             role: "user",
@@ -36,13 +38,23 @@ app.post("/chat", async (req, res) => {
 
         const data = await response.json();
 
+        console.log("RESPUESTA OPENAI:", JSON.stringify(data, null, 2));
+
+        if (data.error) {
+            return res.json({
+                reply: "ERROR: " + data.error.message
+            });
+        }
+
         res.json({
-            reply: data.choices?.[0]?.message?.content || "No pude responder."
+            reply: data.choices[0].message.content
         });
 
-    } catch (error) {
+    } catch (err) {
+        console.error("ERROR SERVER:", err);
+
         res.json({
-            reply: "Error con la IA."
+            reply: "ERROR SERVER"
         });
     }
 });
